@@ -30,13 +30,13 @@ class MyApp extends StatelessWidget {
         title: 'Flutter Firebase',
         routes: {
           '/': (context) => SplashScreen(
-                child: LoginPage(),
+              // child: LoginPage(),
               ),
           '/login': (context) => const LoginPage(),
-          '/signUp': (context) => const SignupPage(),
-          '/home': (context) => const HomePage(),
+          '/signUp': (context) => SignupPage(),
+          '/home': (context) => HomePage(),
           '/scan': (context) => ScanPage(),
-          '/inventory': (context) => InventoryPage(),
+          '/inventory': (context) => const InventoryPage(),
           '/profile': (context) => ProfilePage(),
           '/recipe_detail': (context) => const RecipeDetailPage(),
         });
