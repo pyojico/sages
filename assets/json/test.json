@@ -1,0 +1,28 @@
+{
+  "ingredients": [
+    {
+      "id": "i001",
+      "name": "Tomato",
+      "quantity": 5,
+      "unit": "pieces",
+      "scannedDateTime": "2025-03-01T12:00:00Z",
+      "foodType": "vegetable"
+    },
+    {
+      "id": "i002",
+      "name": "Cucumber",
+      "quantity": 3,
+      "unit": "pieces",
+      "scannedDateTime": "2025-03-10T12:00:00Z",
+      "foodType": "vegetable"
+    },
+    {
+      "id": "i003",
+      "name": "Carrot",
+      "quantity": 10,
+      "unit": "pieces",
+      "scannedDateTime": "2025-02-20T12:00:00Z",
+      "foodType": "vegetable"
+    }
+  ]
+}

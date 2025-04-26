@@ -1,32 +1,55 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import '../widgets/BottomNav.dart';
 
 class InventoryPage extends StatefulWidget {
-  InventoryPage({super.key});
+  const InventoryPage({super.key});
 
   @override
   _InventoryPageState createState() => _InventoryPageState();
 }
 
 class _InventoryPageState extends State<InventoryPage> {
-  final ValueNotifier<int> _selectedIndex = ValueNotifier<int>(2);
-  final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
-  String _message = "No Data";
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  Stream<QuerySnapshot>? _inventoryStream;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _databaseReference.child('food').onValue.listen((event) {
-      final data = event.snapshot.value;
-      setState(() {
-        _message = data.toString();
+    // 打印初始用戶狀態
+    final user = _auth.currentUser;
+    print('InventoryPage initState: user=${user?.uid}');
+    if (user != null) {
+      _inventoryStream = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('inventory')
+          .snapshots();
+      print('InventoryPage: Set inventory stream for uid=${user.uid}');
+    } else {
+      // 延遲 1 秒後檢查 auth 狀態
+      Future.delayed(const Duration(seconds: 1), () {
+        _auth.authStateChanges().listen((User? user) {
+          print('InventoryPage authStateChanges: user=${user?.uid}');
+          setState(() {
+            if (user != null) {
+              _inventoryStream = _firestore
+                  .collection('users')
+                  .doc(user.uid)
+                  .collection('inventory')
+                  .snapshots();
+              print('InventoryPage: Set inventory stream for uid=${user.uid}');
+            } else {
+              _inventoryStream = Stream.empty();
+              _errorMessage = 'Please sign in to view inventory.';
+            }
+          });
+        });
       });
-    });
-  }
-
-  void _onItemTapped(int index) {
-    _selectedIndex.value = index;
+    }
   }
 
   @override
@@ -35,44 +58,54 @@ class _InventoryPageState extends State<InventoryPage> {
       appBar: AppBar(
         title: const Text('Inventory'),
       ),
-      body: Center(
-        child: Text(
-          _message,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ),
-      bottomNavigationBar: ValueListenableBuilder<int>(
-        valueListenable: _selectedIndex,
-        builder: (context, value, child) {
-          return BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.business),
-                label: 'Business',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.inventory),
-                label: 'Inventory',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
-            currentIndex: value,
-            selectedItemColor: Colors.black,
-            unselectedItemColor: Colors.grey,
-            selectedLabelStyle: const TextStyle(fontSize: 14),
-            unselectedLabelStyle: const TextStyle(fontSize: 14),
-            onTap: _onItemTapped,
-          );
-        },
-      ),
+      body: _inventoryStream == null
+          ? const Center(child: CircularProgressIndicator())
+          : StreamBuilder<QuerySnapshot>(
+              stream: _inventoryStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (_errorMessage != null) {
+                  return Center(child: Text(_errorMessage!));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No items in inventory.'));
+                }
+
+                final inventoryItems = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: inventoryItems.length,
+                  itemBuilder: (context, index) {
+                    final foodItem =
+                        inventoryItems[index].data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(foodItem['name'] ?? 'Unknown'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Quantity: ${foodItem['quantity'] ?? 'N/A'} ${foodItem['unit'] ?? ''}',
+                          ),
+                          Text(
+                            'Food Type: ${foodItem['foodType'] ?? 'Unknown'}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+      bottomNavigationBar: const AppNavigationBar(),
     );
   }
 }
