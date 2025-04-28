@@ -1,0 +1,60 @@
+{
+    "ingredients": [
+      {
+        "name": "雞肉",
+        "quantity": 2,
+        "unit": "件",
+        "foodType": "肉類",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:00"
+      },
+      {
+        "name": "金針菇",
+        "quantity": 3,
+        "unit": "包",
+        "foodType": "蔬菜",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:00"
+      },
+      {
+        "name": "薑",
+        "quantity": 1,
+        "unit": "個",
+        "foodType": "其他",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:00"
+      },
+      {
+        "name": "紅豆",
+        "quantity": 200,
+        "unit": "克",
+        "foodType": "其他",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:00"
+      },
+      {
+        "name": "紅蘿蔔",
+        "quantity": 2,
+        "unit": "條",
+        "foodType": "蔬菜",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:00"
+      },
+      {
+        "name": "米酒",
+        "quantity": 1,
+        "unit": "枝",
+        "foodType": "其他",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:00"
+      },
+      {
+        "name": "排骨",
+        "quantity": 3,
+        "unit": "個",
+        "foodType": "肉類",
+        "state": "add",
+        "scanTime": "2025-04-28 10:00:05"
+      }
+    ]
+  }

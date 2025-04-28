@@ -15,19 +15,19 @@ class AppNavigationBar extends StatelessWidget {
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
-              label: 'Home',
+              label: '食譜',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.add_circle),
-              label: 'Scan',
+              label: '掃描',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory),
-              label: 'Inventory',
+              label: '雪櫃',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
-              label: 'Profile',
+              label: '個人',
             ),
           ],
           currentIndex: value,

@@ -1,28 +1,44 @@
 {
   "ingredients": [
     {
-      "id": "i001",
-      "name": "Tomato",
-      "quantity": 5,
-      "unit": "pieces",
-      "scannedDateTime": "2025-03-01T12:00:00Z",
-      "foodType": "vegetable"
+      "name": "排骨",
+      "quantity": 4,
+      "unit": "件",
+      "foodType": "肉類",
+      "state": "add",
+      "scanTime": "2025-04-28 10:00:00"
     },
     {
-      "id": "i002",
-      "name": "Cucumber",
+      "name": "紅蘿蔔",
+      "quantity": 2,
+      "unit": "條",
+      "foodType": "蔬菜",
+      "state": "remove",
+      "scanTime": "2025-04-28 10:00:00"
+    },
+    {
+      "name": "雞蛋",
       "quantity": 3,
-      "unit": "pieces",
-      "scannedDateTime": "2025-03-10T12:00:00Z",
-      "foodType": "vegetable"
+      "unit": "個",
+      "foodType": "蛋類",
+      "state": "return",
+      "scanTime": "2025-04-28 10:00:05"
     },
     {
-      "id": "i003",
-      "name": "Carrot",
-      "quantity": 10,
-      "unit": "pieces",
-      "scannedDateTime": "2025-02-20T12:00:00Z",
-      "foodType": "vegetable"
+      "name": "手機",
+      "quantity": -1,
+      "unit": "",
+      "foodType": "其他",
+      "state": "error",
+      "scanTime": "2025-04-28 10:00:10"
+    },
+    {
+      "name": "薯仔",
+      "quantity": 4,
+      "unit": "個",
+      "foodType": "蔬菜",
+      "state": "warn",
+      "scanTime": "2025-04-28 10:00:15"
     }
   ]
 }

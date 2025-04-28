@@ -1,170 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sages/constants/colors.dart';
+import 'package:sages/constants/text_styles.dart';
+import 'package:sages/pages/phone_login_page.dart';
+import 'package:sages/widgets/form_container_widget.dart';
+import 'package:sages/services/FirebaseAuthService.dart';
+import 'package:sages/widgets/custom_button.dart';
+import 'profile_init_0.dart';
 
 class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
+
   @override
   _SignupPageState createState() => _SignupPageState();
 }
 
 class _SignupPageState extends State<SignupPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  List<String> selectedPreferences = [];
-  final preferences = {
-    'taste': ['辣', '甜', '酸', '清淡'],
-    'diet': ['素食', '葷食', '低卡'],
-    'ingredients': ['紅蘿蔔', '青瓜', '豆腐', '米酒'],
-    'season': ['穀雨', '清明', '立夏'],
-  };
+  final FirebaseAuthService _auth = FirebaseAuthService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _pwController = TextEditingController();
+  String? _errorMessage;
 
-  void _signup() async {
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('密碼不一致', style: TextStyle(fontSize: 16))),
-      );
-      return;
-    }
-    try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-              email: _emailController.text, password: _passwordController.text);
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-        'email': _emailController.text,
-        'preferences': {
-          'taste': selectedPreferences
-              .where((p) => preferences['taste']!.contains(p))
-              .toList(),
-          'diet': selectedPreferences
-              .where((p) => preferences['diet']!.contains(p))
-              .toList(),
-          'ingredients': selectedPreferences
-              .where((p) => preferences['ingredients']!.contains(p))
-              .toList(),
-          'season': selectedPreferences
-              .where((p) => preferences['season']!.contains(p))
-              .toList(),
-        },
-        'created_at': FieldValue.serverTimestamp(),
-      });
-      Navigator.pushNamed(context, '/guide');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('註冊失敗：$e', style: TextStyle(fontSize: 16))),
-      );
-    }
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _pwController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text('註冊',
-            style: TextStyle(fontSize: 24, color: Color(0xFF1976D2))),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextField(
+              const Text(
+                '歡迎加入SAGES',
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              ),
+              // -------- Error Message --------
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(
+                      fontSize: AppTextSizes.bodySmall, color: AppColors.red),
+                ),
+              ],
+              // -------- Input Field --------
+              const SizedBox(height: 10),
+              FormContainerWidget(
                 controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: '電郵',
-                  labelStyle: TextStyle(fontSize: 20),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                style: TextStyle(fontSize: 20),
+                hintText: "電郵",
+                isPasswordField: false,
               ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: '密碼',
-                  labelStyle: TextStyle(fontSize: 20),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                style: TextStyle(fontSize: 20),
-                obscureText: true,
+              const SizedBox(height: 10),
+              FormContainerWidget(
+                controller: _pwController,
+                hintText: "密碼",
+                isPasswordField: true,
               ),
-              SizedBox(height: 16),
-              TextField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: '確認密碼',
-                  labelStyle: TextStyle(fontSize: 20),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                style: TextStyle(fontSize: 20),
-                obscureText: true,
+              // -------- SignUp Button --------
+              const SizedBox(height: 20),
+              CustomButton(
+                text: '註冊',
+                onPressed: _signUp,
+                backgroundColor: AppColors.green,
+                textColor: Colors.black,
               ),
-              SizedBox(height: 24),
-              Text('選擇口味偏好',
-                  style: TextStyle(fontSize: 20, color: Color(0xFF1976D2))),
-              ...preferences.entries.map((entry) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 16),
-                      Text(entry.key.toUpperCase(),
-                          style: TextStyle(fontSize: 18)),
-                      Wrap(
-                        spacing: 8,
-                        children: entry.value.map((pref) {
-                          final isSelected = selectedPreferences.contains(pref);
-                          return ChoiceChip(
-                            label: Text(pref,
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Color(0xFF1976D2))),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                if (selected) {
-                                  selectedPreferences.add(pref);
-                                } else {
-                                  selectedPreferences.remove(pref);
-                                }
-                              });
-                            },
-                            selectedColor: Color(0xFF1976D2),
-                            backgroundColor: Colors.white,
-                            side: BorderSide(color: Color(0xFF1976D2)),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  )),
-              SizedBox(height: 24),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _signup,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF1976D2),
-                    padding: EdgeInsets.symmetric(horizontal: 80, vertical: 20),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+              // -------- Div SignIn --------
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "已有帳號?",
+                    style: TextStyle(color: AppColors.gray500, fontSize: 14),
                   ),
-                  child: Text('下一步',
-                      style: TextStyle(fontSize: 20, color: Colors.white)),
-                ),
+                  const SizedBox(
+                    width: 5,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PhoneLoginPage()),
+                        (route) => false,
+                      );
+                    },
+                    child: const Text(
+                      "立即登入",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.greyBlue,
+                          fontSize: 14),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _signUp() async {
+    final String email = _emailController.text;
+    final String password = _pwController.text;
+
+    User? user = await _auth.signUpWithEmailAndPassword(email, password);
+
+    if (user != null) {
+      print('User is successfully created');
+      Navigator.pushNamed(context, "/settingup");
+    } else {
+      print('Sign up failed');
+      setState(() {
+        _errorMessage = 'Sign up failed';
+      });
+    }
   }
 }
