@@ -20,8 +20,8 @@ class _ScanPageState extends State<ScanPage> {
       FirebaseDatabase.instance.ref().child("ingredients");
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  List<dynamic> foodList = [];
-  String realTimeValue = "No Data";
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  List<Map<String, dynamic>> foodList = [];
   bool isScanning = false;
   StreamSubscription<DatabaseEvent>? _listenerHandle;
 
@@ -39,39 +39,55 @@ class _ScanPageState extends State<ScanPage> {
   void _startScanning() {
     setState(() {
       isScanning = true;
+      foodList.clear();
     });
 
     _listenerHandle = _databaseRef.onValue.listen(
       (event) {
-        setState(() {
-          final data = event.snapshot.value;
-          if (data != null) {
-            // 假設 data 係一個 Map，提取 data['ingredients'] 作為 List
-            if (data is Map) {
-              final ingredients = data['ingredients'];
-              if (ingredients != null && ingredients is Iterable) {
-                foodList = List.from(ingredients);
-              } else {
-                foodList.clear();
-              }
-            } else if (data is Iterable) {
-              // 如果 data 係一個 List，直接使用
-              foodList = List.from(data);
-            } else {
-              foodList.clear();
+        final data = event.snapshot.value;
+        if (data != null) {
+          List<dynamic> newIngredients = [];
+          if (data is Map) {
+            final ingredients = data['ingredients'];
+            if (ingredients != null && ingredients is Iterable) {
+              newIngredients = List.from(ingredients);
             }
-          } else {
-            foodList.clear();
+          } else if (data is Iterable) {
+            newIngredients = List.from(data);
           }
-        });
+
+          // 逐個加入新食材到列表頂部
+          _addIngredientsWithDelay(newIngredients);
+        } else {
+          setState(() {
+            foodList.clear();
+          });
+        }
       },
       onError: (error) {
         print("Error: $error");
-        setState(() {
-          realTimeValue = "Error loading data";
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading data: $error")),
+        );
       },
     );
+  }
+
+  void _addIngredientsWithDelay(List<dynamic> ingredients) async {
+    for (var item in ingredients) {
+      await Future.delayed(Duration(seconds: 5)); // 5秒延遲
+      if (mounted) {
+        setState(() {
+          foodList.insert(0, Map<String, dynamic>.from(item)); // 加到頂部
+          print("加入食材: ${item['name']}"); // 調試
+          _listKey.currentState?.insertItem(
+            0, // 插入到頂部
+            duration: Duration(milliseconds: 500),
+          );
+          print("動畫完成: ${item['name']}"); // 調試
+        });
+      }
+    }
   }
 
   void _stopScanning() {
@@ -86,19 +102,42 @@ class _ScanPageState extends State<ScanPage> {
 
   Future<void> _uploadData() async {
     final user = _auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to upload data.')),
+      );
+      return;
+    }
+
     try {
       for (var foodItem in foodList) {
         if (foodItem is Map<Object?, Object?> &&
             (foodItem['state'] == 'add' || foodItem['state'] == 'return')) {
           Map<String, dynamic> item = foodItem.cast<String, dynamic>();
-          if (user != null) {
-            await _firestore
+          if (item['name'] != null && item['name'].isNotEmpty) {
+            final docRef = _firestore
                 .collection('users')
                 .doc(user.uid)
                 .collection('inventory')
-                .add(item);
+                .doc(item['name']);
+            final docSnapshot = await docRef.get();
+
+            if (docSnapshot.exists) {
+              final existingData = docSnapshot.data()!;
+              final existingQuantity =
+                  (existingData['quantity'] as num?)?.toDouble() ?? 0.0;
+              final newQuantity = (item['quantity'] as num?)?.toDouble() ?? 0.0;
+              final updatedQuantity = existingQuantity + newQuantity;
+
+              await docRef.set(
+                {'quantity': updatedQuantity},
+                SetOptions(merge: true),
+              );
+            } else {
+              await docRef.set(item);
+            }
           } else {
-            print("User not authenticated");
+            print("Invalid food name for item: $item");
           }
         } else {
           print("Invalid data format for item: $foodItem");
@@ -110,8 +149,9 @@ class _ScanPageState extends State<ScanPage> {
         const SnackBar(
             content: Text("Data uploaded and deleted successfully!")),
       );
+      Navigator.pop(context);
     } catch (e) {
-      print("Error: $e");
+      print("Error uploading data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error uploading data: $e")),
       );
@@ -137,9 +177,10 @@ class _ScanPageState extends State<ScanPage> {
                         textAlign: TextAlign.center,
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: foodList.length,
-                      itemBuilder: (context, index) {
+                  : AnimatedList(
+                      key: _listKey,
+                      initialItemCount: foodList.length,
+                      itemBuilder: (context, index, animation) {
                         final foodItem = foodList[index];
                         if (foodItem == null) {
                           return const ListTile(
@@ -147,19 +188,31 @@ class _ScanPageState extends State<ScanPage> {
                             subtitle: Text('無數據'),
                           );
                         }
-
-                        return ScanListTile(
-                          foodItem: foodItem,
-                          index: index,
-                          onTap: () {
-                            print("Tapped on ${foodItem['name']}"); // 調試
-                            if (foodItem['state'] == 'error') {
-                              showErrorDialog(context, foodItem);
-                            } else {
-                              showEditDialog(
-                                  context, foodItem, index, _databaseRef);
-                            }
-                          },
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 1.0), // 從底部上滑
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOut,
+                            )),
+                            child: ScanListTile(
+                              key: Key(foodItem['name']), // 確保動畫穩定
+                              foodItem: foodItem,
+                              index: index,
+                              onTap: () {
+                                print("Tapped on ${foodItem['name']}");
+                                if (foodItem['state'] == 'error') {
+                                  showErrorDialog(context, foodItem);
+                                } else {
+                                  showEditDialog(
+                                      context, foodItem, index, _databaseRef);
+                                }
+                              },
+                            ),
+                          ),
                         );
                       },
                     ),

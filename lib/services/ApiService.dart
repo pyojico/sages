@@ -14,11 +14,15 @@ class ApiService {
       throw Exception('No internet connection');
     }
     try {
-      final response = await http.post(
+      final response = await http
+          .post(
         Uri.parse('$_baseUrl/recommendation'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
-      );
+      )
+          .timeout(Duration(seconds: 90), onTimeout: () {
+        throw Exception('Request timed out after 90 seconds');
+      });
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

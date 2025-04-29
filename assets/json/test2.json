@@ -49,10 +49,10 @@
         "scanTime": "2025-04-28 10:00:00"
       },
       {
-        "name": "排骨",
-        "quantity": 3,
-        "unit": "個",
-        "foodType": "肉類",
+        "name": "芥菜",
+        "quantity": 1,
+        "unit": "包",
+        "foodType": "蔬菜",
         "state": "add",
         "scanTime": "2025-04-28 10:00:05"
       }
