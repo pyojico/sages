@@ -12,6 +12,10 @@ import '/pages/recipe_details_page.dart';
 import 'constants/colors.dart';
 import 'constants/text_styles.dart';
 import 'pages/profile_init_0.dart';
+import 'pages/setting-profile.dart';
+import 'pages/setting-family.dart';
+import 'pages/setting-device.dart';
+import 'pages/setting-prefer.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,8 +74,11 @@ class MyApp extends StatelessWidget {
           '/inventory': (context) => InventoryPage(),
           '/profile': (context) => ProfilePage(),
           '/recipe_detail': (context) => const RecipeDetailPage(),
-          '/settingup': (context) => const ProfileInit0(fromSignUp: true),
-          '/setting': (context) => const ProfileInit0(fromSignUp: false),
+          '/settingup': (context) => ProfileInit0(),
+          '/setting-profile': (context) => Setting1(),
+          '/setting-family': (context) => Setting2(),
+          '/setting-device': (context) => Setting3(),
+          '/setting-prefer': (context) => Setting4(),
         });
   }
 }

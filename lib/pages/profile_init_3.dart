@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:sages/constants/colors.dart';
 import '../widgets/top_nav_center.dart';
 import 'profile_init_2.dart';
 import 'profile_init_4.dart';
 
 class ProfileInit3 extends StatefulWidget {
-  final bool fromSignUp;
-
-  const ProfileInit3({super.key, required this.fromSignUp});
-
   @override
   _ProfileInit3State createState() => _ProfileInit3State();
 }
@@ -17,52 +14,56 @@ class ProfileInit3 extends StatefulWidget {
 class _ProfileInit3State extends State<ProfileInit3> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  bool _hasFamilyId = false;
-  String _selectedDevice = 'ESP32-001'; // 模擬選擇嘅設備
+  bool _isLoading = true;
+  bool _isConnected = false;
 
   @override
   void initState() {
     super.initState();
-    _checkFamilyId();
+    _simulateDeviceConnection();
   }
 
-  void _checkFamilyId() async {
-    final familyId = await _firestore.collection('families').limit(2).get();
-    setState(() {
-      _hasFamilyId = familyId.docs.isNotEmpty;
-    });
+  void _simulateDeviceConnection() async {
+    await Future.delayed(Duration(seconds: 3));
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _isConnected = true;
+      });
+    }
   }
 
   Widget _buildSection() {
-    if (_hasFamilyId) {
-      return const Column(
-        mainAxisAlignment: MainAxisAlignment.center, // 垂直置中
-        crossAxisAlignment: CrossAxisAlignment.center, // 水平置中
-        children: [
-          Text('你的家庭成員已安裝鏡頭啦！', style: TextStyle(fontSize: 20)),
-        ],
-      );
-    } else {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center, // 垂直置中
-        crossAxisAlignment: CrossAxisAlignment.start, // 水平置中
-        children: [
-          const Text('請配對你的 ESP32 設備：', style: TextStyle(fontSize: 16)),
-          const SizedBox(height: 16),
-          DropdownButton<String>(
-            value: _selectedDevice,
-            onChanged: (value) => setState(() => _selectedDevice = value!),
-            items: ['ESP32-001', 'ESP32-002', 'ESP32-003']
-                .map((device) =>
-                    DropdownMenuItem(value: device, child: Text(device)))
-                .toList(),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text('檢測到以下設備：', style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 16),
+        const Text(
+          'ESP32-001',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        if (_isLoading)
+          const Column(
+            children: [
+              Text('正在配對中...', style: TextStyle(fontSize: 16)),
+              SizedBox(height: 16),
+              CircularProgressIndicator(),
+            ],
+          )
+        else
+          const Column(
+            children: [
+              Text('成功連接！',
+                  style: TextStyle(fontSize: 20, color: AppColors.green)),
+              SizedBox(height: 16),
+              Icon(Icons.check_circle, color: AppColors.green, size: 48),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text('正在配對中...'),
-          const CircularProgressIndicator(),
-        ],
-      );
-    }
+      ],
+    );
   }
 
   Widget _buildCustomButton(String text, VoidCallback onPressed) {
@@ -90,29 +91,30 @@ class _ProfileInit3State extends State<ProfileInit3> {
                 title: '配對鏡頭設備',
                 currentStep: 3,
                 totalSteps: 4,
-                content: '選擇鏡頭設備進行配對',
+                content: '確認鏡頭設備配對',
                 onBackPressed: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          ProfileInit2(fromSignUp: widget.fromSignUp)),
+                    builder: (context) => ProfileInit2(),
+                  ),
                 ),
               ),
               Expanded(child: _buildSection()),
               _buildCustomButton(
-                  '下一步',
-                  () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                ProfileInit4(fromSignUp: widget.fromSignUp)),
-                      )),
+                '完成設備配對',
+                () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileInit4(),
+                  ),
+                ),
+              ),
               TextButton(
                 onPressed: () => Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          ProfileInit4(fromSignUp: widget.fromSignUp)),
+                    builder: (context) => ProfileInit4(),
+                  ),
                 ),
                 child: const Text('略過'),
               ),

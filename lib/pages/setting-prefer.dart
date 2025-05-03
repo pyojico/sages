@@ -2,15 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sages/constants/colors.dart';
+import 'package:sages/pages/profile_page.dart';
 import '../widgets/top_nav_center.dart';
 import 'profile_init_3.dart';
 
-class ProfileInit4 extends StatefulWidget {
+class Setting4 extends StatefulWidget {
   @override
-  _ProfileInit4State createState() => _ProfileInit4State();
+  _Setting4State createState() => _Setting4State();
 }
 
-class _ProfileInit4State extends State<ProfileInit4> {
+class _Setting4State extends State<Setting4> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final List<String> _foodTypes = [
@@ -137,20 +138,11 @@ class _ProfileInit4State extends State<ProfileInit4> {
                 content: '選擇你的喜好食材和季節',
                 onBackPressed: () => Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileInit3()),
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
                 ),
               ),
               Expanded(child: _buildSection()),
               _buildCustomButton('立即開始', _savePreferences),
-              TextButton(
-                onPressed: () =>
-                    Navigator.pushReplacementNamed(context, '/home'),
-                child: const Text('稍後設定',
-                    style: TextStyle(
-                      color: AppColors.gray500,
-                      fontSize: 14,
-                    )),
-              ),
             ],
           ),
         ),

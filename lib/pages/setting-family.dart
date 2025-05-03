@@ -4,23 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:sages/constants/colors.dart';
 import '../widgets/form_container_widget.dart';
 import '../widgets/top_nav_center.dart';
-import 'profile_init_3.dart';
-import 'profile_init_0.dart';
+import 'profile_page.dart';
 
-class ProfileInit2 extends StatefulWidget {
-  const ProfileInit2({super.key});
+class Setting2 extends StatefulWidget {
+  const Setting2({super.key});
 
   @override
-  _ProfileInit2State createState() => _ProfileInit2State();
+  _Setting2State createState() => _Setting2State();
 }
 
-class _ProfileInit2State extends State<ProfileInit2> {
+class _Setting2State extends State<Setting2> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _familyNameController = TextEditingController();
   bool _hasFamilyId = false;
   String? _existingFamilyId;
   String _existingFamilyName = '';
+  bool _selectedFamily = false;
 
   @override
   void initState() {
@@ -40,16 +40,28 @@ class _ProfileInit2State extends State<ProfileInit2> {
     if (user == null) return;
 
     try {
-      // 檢查現有家庭
-      final familyQuery =
-          await _firestore.collection('families').limit(1).get();
-      if (familyQuery.docs.isNotEmpty) {
-        final familyDoc = familyQuery.docs.first;
-        setState(() {
-          _hasFamilyId = true;
-          _existingFamilyId = familyDoc.id;
-          _existingFamilyName = familyDoc.data()['name']?.toString() ?? '未知家庭';
-        });
+      // 檢查用戶是否加入家庭
+      final doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('info')
+          .doc('family')
+          .get();
+      if (doc.exists && doc.data()?['fid'] != null) {
+        final fid = doc.data()!['fid'] as String;
+        final familyDoc =
+            await _firestore.collection('families').doc(fid).get();
+        if (familyDoc.exists) {
+          final data = familyDoc.data();
+          setState(() {
+            _hasFamilyId = true;
+            _existingFamilyId = fid;
+            _existingFamilyName = data != null && data['name'] != null
+                ? data['name'].toString()
+                : '未知家庭';
+            _selectedFamily = true; // 默認選擇現有家庭
+          });
+        }
       }
     } catch (e) {
       print("檢查家庭失敗: $e");
@@ -80,10 +92,10 @@ class _ProfileInit2State extends State<ProfileInit2> {
         'name': _existingFamilyName,
       }, SetOptions(merge: true));
 
-      // 跳轉 ProfileInit3
+      // 跳轉 ProfilePage
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ProfileInit3()),
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -117,10 +129,10 @@ class _ProfileInit2State extends State<ProfileInit2> {
             : _familyNameController.text,
       }, SetOptions(merge: true));
 
-      // 跳轉 ProfileInit3
+      // 跳轉 ProfilePage
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ProfileInit3()),
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -144,6 +156,20 @@ class _ProfileInit2State extends State<ProfileInit2> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Checkbox(
+                value: _selectedFamily,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedFamily = value ?? false;
+                  });
+                },
+              ),
+              const Text('加入此家庭', style: TextStyle(fontSize: 14)),
+            ],
+          ),
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 20),
@@ -173,7 +199,7 @@ class _ProfileInit2State extends State<ProfileInit2> {
   Widget _buildCustomButton(String text, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: () {
-        if (_hasFamilyId) {
+        if (_hasFamilyId && _selectedFamily) {
           _joinFamily();
         } else {
           _createFamily();
@@ -202,20 +228,20 @@ class _ProfileInit2State extends State<ProfileInit2> {
               TopNavCenter(
                 title: '建立家庭計劃',
                 currentStep: 2,
-                totalSteps: 4,
+                totalSteps: 2,
                 content: '共享家庭雪櫃庫存',
                 onBackPressed: () => Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileInit0()),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 ),
               ),
               Expanded(child: _buildSection()),
-              _buildCustomButton('下一步', _createFamily),
+              _buildCustomButton('完成', _createFamily),
               const SizedBox(height: 14),
               TextButton(
                 onPressed: () => Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileInit3()),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 ),
                 child: const Text(
                   '稍後加入',

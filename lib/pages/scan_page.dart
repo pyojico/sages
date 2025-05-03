@@ -36,11 +36,66 @@ class _ScanPageState extends State<ScanPage> {
     super.dispose();
   }
 
-  void _startScanning() {
+  void _startScanning() async {
     setState(() {
       isScanning = true;
       foodList.clear();
     });
+
+    // 上傳 test.json 到 Realtime Database
+    try {
+      await _databaseRef.set({
+        "ingredients": [
+          {
+            "name": "士多啤梨",
+            "quantity": 1,
+            "unit": "件",
+            "foodType": "蔬菜",
+            "state": "add",
+            "scanTime": "2025-04-28 10:00:00"
+          },
+          {
+            "name": "橙",
+            "quantity": 1,
+            "unit": "條",
+            "foodType": "蔬菜",
+            "state": "remove",
+            "scanTime": "2025-04-28 10:00:00"
+          },
+          {
+            "name": "士多啤梨",
+            "quantity": 1,
+            "unit": "個",
+            "foodType": "蔬菜",
+            "state": "return",
+            "scanTime": "2025-04-28 10:00:05"
+          },
+          {
+            "name": "手機",
+            "quantity": -1,
+            "unit": "",
+            "foodType": "其他",
+            "state": "error",
+            "scanTime": "2025-04-28 10:00:10"
+          },
+          {
+            "name": "香蕉",
+            "quantity": 5,
+            "unit": "個",
+            "foodType": "蔬菜",
+            "state": "add",
+            "scanTime": "2025-04-28 10:00:15"
+          }
+        ]
+      });
+      print("上傳 test.json 成功");
+    } catch (e) {
+      print("上傳 test.json 失敗: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("上傳 test.json 失敗: $e")),
+      );
+      return;
+    }
 
     _listenerHandle = _databaseRef.onValue.listen(
       (event) {

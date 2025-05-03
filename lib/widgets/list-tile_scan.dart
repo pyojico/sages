@@ -46,7 +46,7 @@ class ScanListTile extends StatelessWidget {
       case 'error':
         icon = Icons.error;
         color = AppColors.red;
-        stateText = '⚠️檢測到';
+        stateText = '⚠️非食物';
         displayText = '${foodItem['name'] ?? '未知食材'}‼️';
         showQuantity = false;
         break;

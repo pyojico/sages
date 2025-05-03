@@ -3,7 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/top_nav.dart';
 import '../widgets/BottomNav.dart';
-import '../pages/profile_init_0.dart';
+import 'setting-family.dart';
+import 'setting-device.dart';
+import 'setting-profile.dart';
+import 'setting-prefer.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -17,6 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _username = 'Loading...';
   String _avatar = '👨‍🦳';
+  String _familyName = '未加入家庭';
 
   @override
   void initState() {
@@ -29,10 +33,33 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user == null) return;
 
     try {
-      final doc = await _firestore.collection('users').doc(user.uid).get();
+      // 讀取用戶資料
+      final detailsDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('info')
+          .doc('details')
+          .get();
+      // 讀取家庭資料
+      final familyDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('info')
+          .doc('family')
+          .get();
+
       setState(() {
-        _username = doc['username'] ?? 'User${user.uid.substring(0, 5)}';
-        _avatar = doc['avatar'] ?? '👨‍🦳';
+        if (detailsDoc.exists) {
+          final data = detailsDoc.data()!;
+          _username = data['name'] ?? 'User${user.uid.substring(0, 5)}';
+          _avatar = data['avatar'] ?? '👨‍🦳';
+        }
+        if (familyDoc.exists) {
+          final data = familyDoc.data()!;
+          _familyName = data['name'] ?? '未知家庭';
+        } else {
+          _familyName = '未加入家庭';
+        }
       });
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -42,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _logout() async {
     try {
-      FirebaseAuth.instance.signOut();
+      await FirebaseAuth.instance.signOut();
       Navigator.pushNamed(context, "/email-login");
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -57,7 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           children: [
             TopNav(
-              title: '我的資料',
+              title: '個人檔案',
             ),
             Expanded(
               child: Padding(
@@ -72,27 +99,36 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Text(
                             _avatar,
                             style: const TextStyle(
-                                color: Colors.white, fontSize: 60), // 調整字體大小
+                                color: Colors.white, fontSize: 50),
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Text(
-                          _username,
-                          style: const TextStyle(
-                              fontSize: 24, fontWeight: FontWeight.bold),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _username,
+                              style: const TextStyle(
+                                  fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              _familyName,
+                              style: const TextStyle(
+                                  fontSize: 16, color: Colors.grey),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     ListTile(
                       leading: const Icon(Icons.settings),
-                      title: const Text('設定'),
+                      title: const Text('更改個人資料'),
                       onTap: () async {
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const ProfileInit0(fromSignUp: false),
+                            builder: (context) => Setting1(),
                           ),
                         );
                         _loadUserData(); // 返回時重新載入數據
@@ -100,9 +136,45 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const Divider(),
                     ListTile(
-                      leading: const Icon(Icons.book),
-                      title: const Text('指南'),
-                      onTap: () {},
+                      leading: const Icon(Icons.settings),
+                      title: const Text('加入家庭計劃'),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const Setting2(),
+                          ),
+                        );
+                        _loadUserData(); // 返回時重新載入數據
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.settings),
+                      title: const Text('設置鏡頭裝置'),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const Setting3(),
+                          ),
+                        );
+                        _loadUserData(); // 返回時重新載入數據
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.settings),
+                      title: const Text('更改口味偏好'),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Setting4(),
+                          ),
+                        );
+                        _loadUserData(); // 返回時重新載入數據
+                      },
                     ),
                     const Divider(),
                     ListTile(

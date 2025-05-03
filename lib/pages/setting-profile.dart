@@ -1,18 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:sages/pages/profile_page.dart';
 import '../widgets/form_container_widget.dart';
 import '../widgets/top_nav_center.dart';
 import 'profile_init_2.dart';
 import 'package:sages/constants/colors.dart';
-import 'package:sages/constants/text_styles.dart';
 
-class ProfileInit0 extends StatefulWidget {
+class Setting1 extends StatefulWidget {
   @override
-  _ProfileInit0State createState() => _ProfileInit0State();
+  _Setting1State createState() => _Setting1State();
 }
 
-class _ProfileInit0State extends State<ProfileInit0> {
+class _Setting1State extends State<Setting1> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _usernameController = TextEditingController();
@@ -80,7 +80,7 @@ class _ProfileInit0State extends State<ProfileInit0> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ProfileInit2()),
+        MaterialPageRoute(builder: (context) => ProfilePage()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context)
@@ -154,29 +154,14 @@ class _ProfileInit0State extends State<ProfileInit0> {
           child: Column(
             children: [
               TopNavCenter(
-                title: '設置你的個人檔案',
+                title: '個人資料',
                 currentStep: 1,
                 totalSteps: 4,
                 content: '選擇你的頭像和稱呼',
               ),
               const SizedBox(height: 40),
               Expanded(child: _buildSection()),
-              _buildCustomButton('下一步', _saveProfile),
-              TextButton(
-                onPressed: () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileInit2(),
-                  ),
-                ),
-                child: const Text(
-                  '稍後設定',
-                  style: TextStyle(
-                    color: AppColors.gray500,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+              _buildCustomButton('完成', _saveProfile),
             ],
           ),
         ),
